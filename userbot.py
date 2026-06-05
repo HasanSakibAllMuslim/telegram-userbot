@@ -6,11 +6,11 @@ from telethon.tl.types import InputPhoneContact
 from flask import Flask
 from threading import Thread
 
-# ===== API টোকেন (Environment Variable থেকে নিবে) =====
+# ===== API টোকেন (এখন খালি রাখো, Render-এ বসাবে) =====
 API_ID = int(os.environ.get('API_ID', 33678168))
 API_HASH = os.environ.get('API_HASH', '3e2a43d930ac6ff982ef50d4f6857751')
 
-# ===== টার্গেট লিস্ট (এডিট করে দিলাম) =====
+# ===== তোমার টার্গেট লিস্ট =====
 TARGETS = [
     {'type': 'phone', 'target': '+8801922498942', 'msg': 'Please khoma kore dew\nKhoma korba ki na bolbo\nI am sorry'},
     {'type': 'username', 'target': 'Gonitbujina', 'msg': 'Farhan tui ki valo hobi na, tui ekta gay'},
@@ -19,10 +19,11 @@ TARGETS = [
     {'type': 'username', 'target': 'sakib_all_hasan_2008', 'msg': 'Hello bro, Im working'},
 ]
 
-DELAY_BETWEEN_MESSAGES = 1
-DELAY_BETWEEN_CYCLES = 1
+# ===== টাইমিং =====
+DELAY_BETWEEN_MESSAGES = 1   # সেকেন্ড
+DELAY_BETWEEN_CYCLES = 1     # সেকেন্ড
 
-# ===== Flask app (Render এর জন্য) =====
+# ===== Flask app (Render-এর জন্য) =====
 app = Flask(__name__)
 
 @app.route('/')
@@ -33,7 +34,7 @@ def home():
 def health():
     return "OK", 200
 
-# ===== Userbot কোড =====
+# ===== Userbot কোড শুরু =====
 client = TelegramClient('userbot_session', API_ID, API_HASH)
 sending_active = False
 current_task = None
@@ -121,8 +122,6 @@ def start_bot():
     loop.run_until_complete(run_bot())
 
 if __name__ == "__main__":
-    # ব্যাকগ্রাউন্ডে বট চালাও
     thread = Thread(target=start_bot)
     thread.start()
-    # Flask সার্ভার চালাও (Render এর জন্য)
     app.run(host='0.0.0.0', port=8080)
