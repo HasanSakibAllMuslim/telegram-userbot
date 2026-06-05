@@ -1,13 +1,16 @@
 import asyncio
+import os
 from telethon import TelegramClient, events
 from telethon.tl.functions.contacts import ImportContactsRequest
 from telethon.tl.types import InputPhoneContact
+from flask import Flask
+from threading import Thread
 
-# ===== তোমার API টোকেন (my.telegram.org থেকে নাও) =====
-API_ID = 33678168  # রিভোক করে নতুন করে বসাও
-API_HASH = '3e2a43d930ac6ff982ef50d4f6857751'  # রিভোক করে নতুন করে বসাও
+# ===== API টোকেন (Environment Variable থেকে নিবে) =====
+API_ID = int(os.environ.get('API_ID', 33678168))
+API_HASH = os.environ.get('API_HASH', '3e2a43d930ac6ff982ef50d4f6857751')
 
-# ===== টার্গেট লিস্ট =====
+# ===== টার্গেট লিস্ট (এডিট করে দিলাম) =====
 TARGETS = [
     {'type': 'phone', 'target': '+8801922498942', 'msg': 'Please khoma kore dew\nKhoma korba ki na bolbo\nI am sorry'},
     {'type': 'username', 'target': 'Gonitbujina', 'msg': 'Farhan tui ki valo hobi na, tui ekta gay'},
@@ -16,11 +19,21 @@ TARGETS = [
     {'type': 'username', 'target': 'sakib_all_hasan_2008', 'msg': 'Hello bro, Im working'},
 ]
 
-# ===== টাইমিং সেটিংস =====
-DELAY_BETWEEN_MESSAGES = 1   # সেকেন্ড
-DELAY_BETWEEN_CYCLES = 1     # সেকেন্ড
-# =======================================
+DELAY_BETWEEN_MESSAGES = 1
+DELAY_BETWEEN_CYCLES = 1
 
+# ===== Flask app (Render এর জন্য) =====
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "🤖 Telegram Userbot is running!"
+
+@app.route('/health')
+def health():
+    return "OK", 200
+
+# ===== Userbot কোড =====
 client = TelegramClient('userbot_session', API_ID, API_HASH)
 sending_active = False
 current_task = None
@@ -66,7 +79,6 @@ async def message_sender():
             else:
                 await send_to_username(target['target'], target['msg'])
             
-            print(f'⏳ {DELAY_BETWEEN_MESSAGES} সেকেন্ড অপেক্ষা...')
             await asyncio.sleep(DELAY_BETWEEN_MESSAGES)
         
         if sending_active:
@@ -95,7 +107,7 @@ async def handle_command(event):
         else:
             await event.reply('ℹ️ কিছু চলছিল না।')
 
-async def main():
+async def run_bot():
     await client.start()
     print('=' * 50)
     print('🤖 ইউজারবট চালু হয়েছে!')
@@ -103,5 +115,14 @@ async def main():
     print('=' * 50)
     await client.run_until_disconnected()
 
-with client:
-    client.loop.run_until_complete(main())
+def start_bot():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(run_bot())
+
+if __name__ == "__main__":
+    # ব্যাকগ্রাউন্ডে বট চালাও
+    thread = Thread(target=start_bot)
+    thread.start()
+    # Flask সার্ভার চালাও (Render এর জন্য)
+    app.run(host='0.0.0.0', port=8080)
